@@ -3,12 +3,15 @@ import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    kotlin("jvm") version "1.5.31"
-    id("org.jetbrains.compose") version "1.0.0-alpha4-build398"
+    val kotlinVersion: String by System.getProperties()
+
+    kotlin("jvm") version kotlinVersion
+    kotlin("plugin.serialization") version kotlinVersion
+    id("org.jetbrains.compose") version "1.2.0-alpha01-dev770"
 }
 
 group = "me.shika"
-version = "1.0"
+version = "1.0.0"
 
 repositories {
     google()
@@ -18,10 +21,14 @@ repositories {
 
 dependencies {
     implementation(compose.desktop.currentOs)
+
+    implementation("org.slf4j:slf4j-simple:1.7.36")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
+    implementation("com.github.tkuenneth:nativeparameterstoreaccess:0.1.2")
 }
 
 tasks.withType<KotlinCompile>() {
-    kotlinOptions.jvmTarget = "16"
+    kotlinOptions.jvmTarget = "17"
 }
 
 compose.desktop {
@@ -30,7 +37,7 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "InfoMessageImproved"
-            packageVersion = "1.0.0"
+            packageVersion = version.toString()
         }
     }
 }
