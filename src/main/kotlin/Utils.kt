@@ -16,3 +16,11 @@ class MultiOutputStream(private vararg val streams: OutputStream) : OutputStream
         it.write(b, off, len)
     }
 }
+
+data class Game (
+    val time: String,
+    val gameClass: String,
+    val missingKR: Int,
+    val missingSR: Int,
+    val amountGames: Int
+)

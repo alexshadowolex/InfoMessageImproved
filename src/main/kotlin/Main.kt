@@ -21,7 +21,7 @@ import javax.swing.JOptionPane
 import kotlin.system.exitProcess
 
 
-val logger: Logger = LoggerFactory.getLogger("Bot")
+val logger: Logger = LoggerFactory.getLogger("App")
 fun main() = try {
     setupLogging()
 
@@ -30,7 +30,7 @@ fun main() = try {
             onCloseRequest = ::exitApplication,
             title = "Create Info Message v2",
             state = WindowState(
-                size = DpSize(450.dp, 700.dp),
+                size = DpSize(900.dp, 450.dp),
                 position = WindowPosition(Alignment.Center)
             ),
             resizable = false,
