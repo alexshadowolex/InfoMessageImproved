@@ -1,11 +1,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -292,38 +287,46 @@ fun App(){
                 }
 
                 Row (
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 12.dp)
                 ) {
                     Column (
-                        modifier = Modifier.fillMaxWidth(0.5F)
+                        modifier = Modifier
+                            .fillMaxWidth(0.5F)
+                            .padding(end = 12.dp)
                     ) {
                         Button(
                             onClick = {},
                             modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .fillMaxWidth(0.9F)
+                                .fillMaxWidth()
                         ) {
                             Text("Add To List")
                         }
                     }
 
                     Column (
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
                     ) {
                         Button(
                             onClick = {},
                             modifier = Modifier
-                                .align(Alignment.CenterHorizontally)
-                                .fillMaxWidth(0.9F)
+                                .fillMaxWidth()
                         ) {
                             Text("Print")
                         }
                     }
                 }
 
-                Row {
+                Row (
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                ) {
                     Column (
-                        modifier = Modifier.fillMaxWidth(0.5F)
+                        modifier = Modifier
+                            .fillMaxWidth(0.5F)
+                            .padding(end = 5.dp)
                     ) {
                         Row (
                             modifier = Modifier.padding(bottom = 5.dp)
@@ -339,7 +342,9 @@ fun App(){
                     }
 
                     Column (
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(end = 5.dp)
                     ) {
                         Row (
                             modifier = Modifier.padding(bottom = 5.dp)
@@ -362,7 +367,8 @@ fun App(){
 @Composable
 fun GameList(games: List<Game>) {
     Column (
-        modifier = Modifier.verticalScroll(ScrollState(0))
+        modifier = Modifier
+            .verticalScroll(ScrollState(0))
     ) {
         if(games.isNotEmpty()) {
             games.forEach { game ->
@@ -376,23 +382,46 @@ fun GameList(games: List<Game>) {
 
 @Composable
 fun GameRow(game: Game) {
-    Row {
+    Row (
+        modifier = Modifier.padding(bottom = 5.dp)
+    ) {
         Text(
             text = game.time,
-            modifier = Modifier.padding(end = 2.dp)
+            modifier = Modifier
+                .weight(0.11F)
+                .align(Alignment.CenterVertically)
         )
         Text(
             text = game.gameClass,
-            modifier = Modifier.padding(end = 4.dp)
+            modifier = Modifier
+                .weight(0.25F)
+                .align(Alignment.CenterVertically)
         )
         Text(
             text = "KR: ${game.missingKR}",
-            modifier = Modifier.padding(end = 4.dp)
+            modifier = Modifier
+                .weight(0.15F)
+                .align(Alignment.CenterVertically)
         )
         Text(
             text = "SR: ${game.missingSR}",
-            modifier = Modifier.padding(end = 4.dp)
+            modifier = Modifier
+                .weight(0.15F)
+                .align(Alignment.CenterVertically)
         )
-        Text("Amount Games: ${game.amountGames}")
+        Text(
+            text = "Amount: ${game.amountGames}",
+            modifier = Modifier
+                .weight(0.2F)
+                .align(Alignment.CenterVertically)
+        )
+        Button(
+            onClick = {},
+            modifier = Modifier
+                .size(15.dp),
+            contentPadding = PaddingValues(0.dp)
+        ) {
+            Text("x")
+        }
     }
 }
