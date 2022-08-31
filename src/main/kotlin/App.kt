@@ -30,16 +30,13 @@ val darkColorPalette = darkColors(
     onBackground = Color.White,
 )
 
-val testSaturdayGames = listOf(
+val testSaturdayGames = mutableStateListOf(
     Game("10:00", "mJC", 2, 0, 1),
     Game("12:00", "mJB", 2, 0, 1),
-    Game("14:00", "2. Männer", 2, 1, 1),
-    Game("14:00", "2. Männer", 2, 1, 1),
-    Game("14:00", "2. Männer", 2, 1, 1),
     Game("14:00", "2. Männer", 2, 1, 1)
 )
 
-val testSundayGames = listOf(
+val testSundayGames = mutableStateListOf(
     Game("10:00", "mJE", 2, 2, 4),
     Game("15:00", "mJC", 1, 0, 1)
 )
@@ -56,6 +53,10 @@ fun App(){
     var missingKR by remember { mutableStateOf(0) }
     var missingSR by remember { mutableStateOf(0) }
     var amountGames by remember { mutableStateOf(0) }
+
+    val selectedValue = remember { mutableStateOf("") }
+    val labelSaturday = "Saturday"
+    val labelSunday = "Sunday"
 
 
     LaunchedEffect(Unit) {
@@ -92,7 +93,6 @@ fun App(){
                             },
                             value = textFileName,
                             onValueChange = { value ->
-                                logger.info(value)
                                 textFileName = value
                             },
                             modifier = Modifier
@@ -111,7 +111,6 @@ fun App(){
                             },
                             value = locationSaturday,
                             onValueChange = { value ->
-                                logger.info(value)
                                 locationSaturday = value
                             },
                             modifier = Modifier
@@ -130,15 +129,20 @@ fun App(){
                             },
                             value = locationSunday,
                             onValueChange = { value ->
-                                logger.info(value)
                                 locationSunday = value
                             }
                         )
                     }
                 }
 
+                Divider(
+                    color = MaterialTheme.colors.secondary,
+                    thickness = 2.dp,
+                    modifier = Modifier.padding(top = 9.dp)
+                )
+
                 Row (
-                    modifier = Modifier.padding(top = 12.dp)
+                    modifier = Modifier.padding(top = 9.dp)
                 ) {
                     Column {
                         TextField(
@@ -150,7 +154,6 @@ fun App(){
                             },
                             value = gameTime,
                             onValueChange = { value ->
-                                logger.info(value)
                                 gameTime = value
                             },
                             modifier = Modifier
@@ -169,7 +172,6 @@ fun App(){
                             },
                             value = gameClass,
                             onValueChange = { value ->
-                                logger.info(value)
                                 gameClass = value
                             },
                             modifier = Modifier
@@ -188,7 +190,6 @@ fun App(){
                             },
                             value = missingKR.toString(),
                             onValueChange = { value ->
-                                logger.info(value)
                                 missingKR = try {
                                     value.toInt()
                                 } catch (e: java.lang.NumberFormatException) {
@@ -212,7 +213,6 @@ fun App(){
                             },
                             value = missingSR.toString(),
                             onValueChange = { value ->
-                                logger.info(value)
                                 missingSR = try {
                                     value.toInt()
                                 } catch (e: java.lang.NumberFormatException) {
@@ -234,7 +234,6 @@ fun App(){
                             },
                             value = amountGames.toString(),
                             onValueChange = { value ->
-                                logger.info(value)
                                 amountGames = try {
                                     value.toInt()
                                 } catch (e: java.lang.NumberFormatException) {
@@ -243,10 +242,6 @@ fun App(){
                             }
                         )
                     }
-
-                    val selectedValue = remember { mutableStateOf("") }
-                    val labelSaturday = "Saturday"
-                    val labelSunday = "Sunday"
 
                     Column (
                         modifier = Modifier
@@ -297,7 +292,26 @@ fun App(){
                             .padding(end = 12.dp)
                     ) {
                         Button(
-                            onClick = {},
+                            onClick = {
+                                if(selectedValue.value == labelSaturday) {
+                                    testSaturdayGames
+                                } else {
+                                    testSundayGames
+                                }.add(
+                                    Game(
+                                        gameTime,
+                                        gameClass,
+                                        missingKR,
+                                        missingSR,
+                                        amountGames
+                                    )
+                                )
+                                gameTime = ""
+                                gameClass = ""
+                                missingKR = 0
+                                missingSR = 0
+                                amountGames = 0
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
@@ -310,7 +324,9 @@ fun App(){
                             .fillMaxWidth()
                     ) {
                         Button(
-                            onClick = {},
+                            onClick = {
+
+                            },
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
@@ -337,7 +353,7 @@ fun App(){
                             )
                         }
                         Row {
-                            GameList(testSaturdayGames)
+                            GameList(isSaturday = true, games = testSaturdayGames)
                         }
                     }
 
@@ -355,7 +371,7 @@ fun App(){
                             )
                         }
                         Row {
-                            GameList(testSundayGames)
+                            GameList(isSaturday = false, testSundayGames)
                         }
                     }
                 }
@@ -365,14 +381,14 @@ fun App(){
 }
 
 @Composable
-fun GameList(games: List<Game>) {
+fun GameList(isSaturday: Boolean, games: List<Game>) {
     Column (
         modifier = Modifier
             .verticalScroll(ScrollState(0))
     ) {
         if(games.isNotEmpty()) {
             games.forEach { game ->
-                GameRow(game)
+                GameRow(isSaturday, game)
             }
         } else {
             Text("None")
@@ -381,7 +397,7 @@ fun GameList(games: List<Game>) {
 }
 
 @Composable
-fun GameRow(game: Game) {
+fun GameRow(isSaturday: Boolean, game: Game) {
     Row (
         modifier = Modifier.padding(bottom = 5.dp)
     ) {
@@ -416,7 +432,20 @@ fun GameRow(game: Game) {
                 .align(Alignment.CenterVertically)
         )
         Button(
-            onClick = {},
+            onClick = {
+                val currentList = if (isSaturday) {
+                    testSaturdayGames
+                } else {
+                    testSundayGames
+                }
+                currentList.remove(game)
+                logger.info("New List: ${
+                    if(isSaturday) {
+                        "Saturday"
+                    } else {
+                        "Sunday"
+                    }}: ${currentList.joinToString("|")}")
+            },
             modifier = Modifier
                 .size(15.dp),
             contentPadding = PaddingValues(0.dp)
