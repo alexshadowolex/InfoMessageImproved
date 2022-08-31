@@ -34,3 +34,6 @@ build/*
 # executables
 gradlew
 gradlew.bat
+
+# ouput folder
+output

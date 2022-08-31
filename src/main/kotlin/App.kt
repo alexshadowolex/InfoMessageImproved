@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.sp
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry
 import kotlinx.coroutines.delay
+import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 val lightColorPalette = lightColors(
@@ -47,9 +48,9 @@ fun App(){
     var missingSR by remember { mutableStateOf(0) }
     var amountGames by remember { mutableStateOf(0) }
 
-    val selectedValue = remember { mutableStateOf("") }
     val labelSaturday = "Saturday"
     val labelSunday = "Sunday"
+    val selectedValue = remember { mutableStateOf(labelSaturday) }
 
 
     LaunchedEffect(Unit) {
@@ -184,7 +185,7 @@ fun App(){
                             value = missingKR.toString(),
                             onValueChange = { value ->
                                 missingKR = try {
-                                    value.toInt()
+                                    value.trim().toInt()
                                 } catch (e: java.lang.NumberFormatException) {
                                     0
                                 }
@@ -207,7 +208,7 @@ fun App(){
                             value = missingSR.toString(),
                             onValueChange = { value ->
                                 missingSR = try {
-                                    value.toInt()
+                                    value.trim().toInt()
                                 } catch (e: java.lang.NumberFormatException) {
                                     0
                                 }
@@ -228,7 +229,7 @@ fun App(){
                             value = amountGames.toString(),
                             onValueChange = { value ->
                                 amountGames = try {
-                                    value.toInt()
+                                    value.trim().toInt()
                                 } catch (e: java.lang.NumberFormatException) {
                                     0
                                 }
@@ -286,7 +287,7 @@ fun App(){
                     ) {
                         Button(
                             onClick = {
-                                addGameToList(selectedValue.value == labelSaturday, gameTime, gameClass, missingKR, missingSR, amountGames)
+                                addGameToList(selectedValue.value == labelSaturday, gameTime.trim(), gameClass.trim(), missingKR, missingSR, amountGames)
                                 gameTime = ""
                                 gameClass = ""
                                 missingKR = 0
@@ -306,7 +307,7 @@ fun App(){
                     ) {
                         Button(
                             onClick = {
-                                printFile(textFileName, locationSaturday, locationSunday)
+                                printFile(textFileName.trim(), locationSaturday.trim(), locationSunday.trim())
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -370,6 +371,11 @@ fun GameList(isSaturday: Boolean, games: List<Game>) {
         if(games.isNotEmpty()) {
             games.forEach { game ->
                 GameRow(isSaturday, game)
+
+                Divider(
+                    color = MaterialTheme.colors.secondary,
+                    thickness = 1.dp
+                )
             }
         } else {
             Text("None")
@@ -380,18 +386,18 @@ fun GameList(isSaturday: Boolean, games: List<Game>) {
 @Composable
 fun GameRow(isSaturday: Boolean, game: Game) {
     Row (
-        modifier = Modifier.padding(bottom = 5.dp)
+        modifier = Modifier.padding(bottom = 5.dp, top = 5.dp)
     ) {
         Text(
             text = game.time,
             modifier = Modifier
-                .weight(0.11F)
+                .weight(0.14F)
                 .align(Alignment.CenterVertically)
         )
         Text(
             text = game.gameClass,
             modifier = Modifier
-                .weight(0.25F)
+                .weight(0.22F)
                 .align(Alignment.CenterVertically)
         )
         Text(
@@ -425,10 +431,12 @@ fun GameRow(isSaturday: Boolean, game: Game) {
                         "Saturday"
                     } else {
                         "Sunday"
-                    }}: ${currentList.joinToString("|")}")
+                    }}: ${currentList.joinToString("|")}"
+                )
             },
             modifier = Modifier
-                .size(15.dp),
+                .size(15.dp)
+                .align(Alignment.CenterVertically),
             contentPadding = PaddingValues(0.dp)
         ) {
             Text("x")
@@ -467,9 +475,79 @@ fun addGameToList(isSaturday: Boolean, gameTime: String, gameClass: String, miss
         logger.error("Error wile sorting the list. Did you add garbage as a time?")
         e.printStackTrace()
     }
+
+    logger.info("New List: ${
+        if(isSaturday) {
+            "Saturday"
+        } else {
+            "Sunday"
+        }}: ${currentList.joinToString("|")}"
+    )
 }
 
 
 fun printFile(textFileName: String, locationSaturday: String, locationSunday: String) {
+    val outputDirectory = File("output")
+    if(!outputDirectory.exists()) {
+        outputDirectory.mkdir()
+    }
+    val outputFile = File("${outputDirectory.name}/$textFileName.txt")
+    outputFile.createNewFile()
 
+    var output = ""
+    if(saturdayGames.isNotEmpty()) {
+        output += "*+++Samstag+++*\nAlle Spiele finden in der *$locationSaturday* statt\n"
+        output += buildGamesString(saturdayGames)
+    }
+
+    if(sundayGames.isNotEmpty()) {
+        output += "*+++Sonntag+++*\nAlle Spiele finden in der *$locationSunday* statt\n"
+        output += buildGamesString(sundayGames)
+    }
+
+    logger.info("Print Finished.")
+    logger.info("Full printed text:\n$output")
+
+    outputFile.writeText(output, charset("UTF-8"))
+}
+
+fun buildGamesString(games: List<Game>): String {
+    var output = ""
+    games.forEach {
+        output += "\n*${it.time} Uhr* "
+        if(it.amountGames > 1) {
+            output += "finden ${it.amountGames} Spiele der ${it.gameClass} statt. Dafür "
+        }
+
+        output += if( (it.missingKR == 0 && it.missingSR == 1) || (it.missingKR == 1 && it.missingSR == 0) ) {
+            "wird "
+        } else {
+            "werden "
+        }
+
+        if(it.amountGames == 1) {
+            output += "bei der ${it.gameClass} "
+        }
+
+        output += "noch "
+
+        if(it.missingSR != 0) {
+            output += "*${it.missingSR} SR* "
+        }
+
+        if(it.missingKR != 0){
+            if(it.missingSR != 0 ) {
+                output += "und "
+            }
+            output += "*${it.missingKR} KR* "
+
+            // Not needed for Season 2022/2023
+            /* if(it.gameClass == "1. Männer")
+                output += "mit Sachsenligaerweiterung "*/
+        }
+
+        output += "benötigt.\n\n====================\n"
+    }
+
+    return output
 }
