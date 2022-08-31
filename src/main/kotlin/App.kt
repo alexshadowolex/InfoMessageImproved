@@ -30,16 +30,9 @@ val darkColorPalette = darkColors(
     onBackground = Color.White,
 )
 
-val testSaturdayGames = mutableStateListOf(
-    Game("10:00", "mJC", 2, 0, 1),
-    Game("12:00", "mJB", 2, 0, 1),
-    Game("14:00", "2. Männer", 2, 1, 1)
-)
+val saturdayGames = mutableStateListOf<Game>()
 
-val testSundayGames = mutableStateListOf(
-    Game("10:00", "mJE", 2, 2, 4),
-    Game("15:00", "mJC", 1, 0, 1)
-)
+val sundayGames = mutableStateListOf<Game>()
 
 @Composable
 @Preview
@@ -293,19 +286,7 @@ fun App(){
                     ) {
                         Button(
                             onClick = {
-                                if(selectedValue.value == labelSaturday) {
-                                    testSaturdayGames
-                                } else {
-                                    testSundayGames
-                                }.add(
-                                    Game(
-                                        gameTime,
-                                        gameClass,
-                                        missingKR,
-                                        missingSR,
-                                        amountGames
-                                    )
-                                )
+                                addGameToList(selectedValue.value == labelSaturday, gameTime, gameClass, missingKR, missingSR, amountGames)
                                 gameTime = ""
                                 gameClass = ""
                                 missingKR = 0
@@ -325,7 +306,7 @@ fun App(){
                     ) {
                         Button(
                             onClick = {
-
+                                printFile(textFileName, locationSaturday, locationSunday)
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -353,7 +334,7 @@ fun App(){
                             )
                         }
                         Row {
-                            GameList(isSaturday = true, games = testSaturdayGames)
+                            GameList(isSaturday = true, games = saturdayGames)
                         }
                     }
 
@@ -371,7 +352,7 @@ fun App(){
                             )
                         }
                         Row {
-                            GameList(isSaturday = false, testSundayGames)
+                            GameList(isSaturday = false, sundayGames)
                         }
                     }
                 }
@@ -434,9 +415,9 @@ fun GameRow(isSaturday: Boolean, game: Game) {
         Button(
             onClick = {
                 val currentList = if (isSaturday) {
-                    testSaturdayGames
+                    saturdayGames
                 } else {
-                    testSundayGames
+                    sundayGames
                 }
                 currentList.remove(game)
                 logger.info("New List: ${
@@ -453,4 +434,42 @@ fun GameRow(isSaturday: Boolean, game: Game) {
             Text("x")
         }
     }
+}
+
+fun addGameToList(isSaturday: Boolean, gameTime: String, gameClass: String, missingKR: Int, missingSR: Int, amountGames: Int) {
+    val currentList = if(isSaturday) {
+        saturdayGames
+    } else {
+        sundayGames
+    }
+
+    currentList.add(
+        Game(
+            gameTime,
+            gameClass,
+            missingKR,
+            missingSR,
+            amountGames
+        )
+    )
+
+    try {
+        val tempList = currentList.toMutableList()
+        tempList.sortBy {
+            it.time.substringBefore(":").toInt()
+        }
+
+        currentList.clear()
+        tempList.forEach {
+            currentList.add(it)
+        }
+    } catch (e: Exception) {
+        logger.error("Error wile sorting the list. Did you add garbage as a time?")
+        e.printStackTrace()
+    }
+}
+
+
+fun printFile(textFileName: String, locationSaturday: String, locationSunday: String) {
+
 }
