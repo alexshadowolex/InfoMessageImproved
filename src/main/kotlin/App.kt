@@ -1,5 +1,6 @@
 import androidx.compose.desktop.ui.tooling.preview.Preview
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -7,12 +8,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry
 import kotlinx.coroutines.delay
-import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 val lightColorPalette = lightColors(
@@ -77,25 +80,54 @@ fun App(){
                 modifier = Modifier.padding(24.dp)
             ) {
                 Row {
-                    Column {
+                    Column (
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                    ) {
                         TextField(
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "File Name"
+                                    text = "Folder Name"
                                 )
                             },
                             value = textFileName,
                             onValueChange = { value ->
                                 textFileName = value
-                            },
-                            modifier = Modifier
-                                .padding(end = 12.dp)
+                            }
 
                         )
+
+                        if (false) {
+                            Text(
+                                style = MaterialTheme.typography.body1,
+                                text = "Open Folder to Last Excel Export",
+                                modifier = Modifier
+                                    .padding(top = 9.dp)
+                                    .clickable {
+                                        /*backgroundCoroutineScope.launch {
+                                        if (AppConfig.lastGeneratedExcelExportName.isNotEmpty()) {
+                                            Runtime.getRuntime().exec(
+                                                "explorer.exe " +
+                                                        "/select," +
+                                                        "${System.getProperty("user.dir")}\\${AppConfig.excelExportOutputDirectoryName}\\" +
+                                                        AppConfig.lastGeneratedExcelExportName
+                                            )
+                                        }
+                                    }*/
+                                    }
+                                    .pointerHoverIcon(PointerIcon.Hand),
+                                textDecoration = TextDecoration.Underline,
+                                color = MaterialTheme.colors.secondary,
+                            )
+                        }
                     }
 
-                    Column {
+
+                    Column (
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                    ) {
                         TextField(
                             label = {
                                 Text(
@@ -106,12 +138,26 @@ fun App(){
                             value = locationSaturday,
                             onValueChange = { value ->
                                 locationSaturday = value
+                            }
+                        )
+
+                        TextField(
+                            label = {
+                                Text(
+                                    color = MaterialTheme.colors.onPrimary,
+                                    text = "Location Saturday 2"
+                                )
+                            },
+                            value = locationSaturday,
+                            onValueChange = { value ->
+                                locationSaturday = value
                             },
                             modifier = Modifier
-                                .padding(end = 12.dp)
+                                .padding(top = 9.dp)
 
                         )
                     }
+
 
                     Column {
                         TextField(
@@ -125,6 +171,21 @@ fun App(){
                             onValueChange = { value ->
                                 locationSunday = value
                             }
+                        )
+
+                        TextField(
+                            label = {
+                                Text(
+                                    color = MaterialTheme.colors.onPrimary,
+                                    text = "Location Sunday 2"
+                                )
+                            },
+                            value = locationSunday,
+                            onValueChange = { value ->
+                                locationSunday = value
+                            },
+                            modifier = Modifier
+                                .padding(top = 9.dp)
                         )
                     }
                 }
@@ -230,7 +291,7 @@ fun App(){
                             onValueChange = { value ->
                                 amountGames = try {
                                     value.trim().toInt()
-                                } catch (e: java.lang.NumberFormatException) {
+                                } catch (_: NumberFormatException) {
                                     0
                                 }
                             }
@@ -442,112 +503,4 @@ fun GameRow(isSaturday: Boolean, game: Game) {
             Text("x")
         }
     }
-}
-
-fun addGameToList(isSaturday: Boolean, gameTime: String, gameClass: String, missingKR: Int, missingSR: Int, amountGames: Int) {
-    val currentList = if(isSaturday) {
-        saturdayGames
-    } else {
-        sundayGames
-    }
-
-    currentList.add(
-        Game(
-            gameTime,
-            gameClass,
-            missingKR,
-            missingSR,
-            amountGames
-        )
-    )
-
-    try {
-        val tempList = currentList.toMutableList()
-        tempList.sortBy {
-            it.time.substringBefore(":").toInt()
-        }
-
-        currentList.clear()
-        tempList.forEach {
-            currentList.add(it)
-        }
-    } catch (e: Exception) {
-        logger.error("Error wile sorting the list. Did you add garbage as a time?")
-        e.printStackTrace()
-    }
-
-    logger.info("New List: ${
-        if(isSaturday) {
-            "Saturday"
-        } else {
-            "Sunday"
-        }}: ${currentList.joinToString("|")}"
-    )
-}
-
-
-fun printFile(textFileName: String, locationSaturday: String, locationSunday: String) {
-    val outputDirectory = File("output")
-    if(!outputDirectory.exists()) {
-        outputDirectory.mkdir()
-    }
-    val outputFile = File("${outputDirectory.name}/$textFileName.txt")
-    outputFile.createNewFile()
-
-    var output = ""
-    if(saturdayGames.isNotEmpty()) {
-        output += "*+++Samstag+++*\nAlle Spiele finden in der *$locationSaturday* statt\n"
-        output += buildGamesString(saturdayGames)
-    }
-
-    if(sundayGames.isNotEmpty()) {
-        output += "*+++Sonntag+++*\nAlle Spiele finden in der *$locationSunday* statt\n"
-        output += buildGamesString(sundayGames)
-    }
-
-    logger.info("Print Finished.")
-    logger.info("Full printed text:\n$output")
-
-    outputFile.writeText(output, charset("UTF-8"))
-}
-
-fun buildGamesString(games: List<Game>): String {
-    var output = ""
-    games.forEach {
-        output += "\n*${it.time} Uhr* "
-        if(it.amountGames > 1) {
-            output += "finden ${it.amountGames} Spiele der ${it.gameClass} statt. Dafür "
-        }
-
-        output += if( (it.missingKR == 0 && it.missingSR == 1) || (it.missingKR == 1 && it.missingSR == 0) ) {
-            "wird "
-        } else {
-            "werden "
-        }
-
-        if(it.amountGames == 1) {
-            output += "bei der ${it.gameClass} "
-        }
-
-        output += "noch "
-
-        if(it.missingSR != 0) {
-            output += "*${it.missingSR} SR* "
-        }
-
-        if(it.missingKR != 0){
-            if(it.missingSR != 0 ) {
-                output += "und "
-            }
-            output += "*${it.missingKR} KR* "
-
-            // Not needed for Season 2022/2023
-            /* if(it.gameClass == "1. Männer")
-                output += "mit Sachsenligaerweiterung "*/
-        }
-
-        output += "benötigt.\n\n====================\n"
-    }
-
-    return output
 }
