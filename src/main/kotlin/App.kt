@@ -34,9 +34,12 @@ val darkColorPalette = darkColors(
     onBackground = Color.White,
 )
 
-val saturdayGames = mutableStateListOf<Game>()
+val allGames = mutableStateListOf<Game>()
 
-val sundayGames = mutableStateListOf<Game>()
+const val labelLocationLH = "Lößnitzsporthalle"
+const val labelLocationEH = "Elbsporthalle"
+const val labelDaySaturday = "Samstag"
+const val labelDaySunday = "Sonntag"
 
 @Composable
 @Preview
@@ -51,9 +54,9 @@ fun App(){
     var missingSR by remember { mutableStateOf(0) }
     var amountGames by remember { mutableStateOf(0) }
 
-    val labelSaturday = "Saturday"
-    val labelSunday = "Sunday"
-    val selectedValue = remember { mutableStateOf(labelSaturday) }
+    val selectedLocation = remember { mutableStateOf(labelLocationLH) }
+
+    val selectedDay = remember { mutableStateOf(labelDaySaturday) }
 
 
     LaunchedEffect(Unit) {
@@ -79,16 +82,21 @@ fun App(){
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
-                Row {
+                Row (
+                    modifier = Modifier
+                        .fillMaxHeight(0.25F)
+                ) {
                     Column (
                         modifier = Modifier
                             .padding(end = 12.dp)
                     ) {
+                        // TODO: Folder name with config?
+
                         TextField(
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "Folder Name"
+                                    text = "File Name"
                                 )
                             },
                             value = textFileName,
@@ -126,67 +134,83 @@ fun App(){
 
                     Column (
                         modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .fillMaxHeight()
                             .padding(end = 12.dp)
                     ) {
-                        TextField(
-                            label = {
-                                Text(
-                                    color = MaterialTheme.colors.onPrimary,
-                                    text = "Location Saturday"
-                                )
-                            },
-                            value = locationSaturday,
-                            onValueChange = { value ->
-                                locationSaturday = value
-                            }
-                        )
+                        Text("Location")
 
-                        TextField(
-                            label = {
-                                Text(
-                                    color = MaterialTheme.colors.onPrimary,
-                                    text = "Location Saturday 2"
-                                )
-                            },
-                            value = locationSaturday,
-                            onValueChange = { value ->
-                                locationSaturday = value
-                            },
+                        Row (
                             modifier = Modifier
-                                .padding(top = 9.dp)
+                                .fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = selectedLocation.value == labelLocationLH,
+                                onClick = {
+                                    selectedLocation.value = labelLocationLH
+                                }
+                            )
+                            Text(
+                                text = labelLocationLH,
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        }
 
-                        )
+                        Row (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = selectedLocation.value == labelLocationEH,
+                                onClick = {
+                                    selectedLocation.value = labelLocationEH
+                                }
+                            )
+                            Text(
+                                text = labelLocationEH,
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        }
                     }
 
 
-                    Column {
-                        TextField(
-                            label = {
-                                Text(
-                                    color = MaterialTheme.colors.onPrimary,
-                                    text = "Location Sunday"
-                                )
-                            },
-                            value = locationSunday,
-                            onValueChange = { value ->
-                                locationSunday = value
-                            }
-                        )
+                    Column (
+                        modifier = Modifier
+                            .fillMaxSize()
+                    ) {
+                        Text("Day")
 
-                        TextField(
-                            label = {
-                                Text(
-                                    color = MaterialTheme.colors.onPrimary,
-                                    text = "Location Sunday 2"
-                                )
-                            },
-                            value = locationSunday,
-                            onValueChange = { value ->
-                                locationSunday = value
-                            },
+                        Row (
                             modifier = Modifier
-                                .padding(top = 9.dp)
-                        )
+                                .fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = selectedDay.value == labelDaySaturday,
+                                onClick = {
+                                    selectedDay.value = labelDaySaturday
+                                }
+                            )
+                            Text(
+                                text = labelDaySaturday,
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        }
+
+                        Row (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                        ) {
+                            RadioButton(
+                                selected = selectedDay.value == labelDaySunday,
+                                onClick = {
+                                    selectedDay.value = labelDaySunday
+                                }
+                            )
+                            Text(
+                                text = labelDaySunday,
+                                modifier = Modifier.align(Alignment.CenterVertically)
+                            )
+                        }
                     }
                 }
 
@@ -247,7 +271,7 @@ fun App(){
                             onValueChange = { value ->
                                 missingKR = try {
                                     value.trim().toInt()
-                                } catch (e: java.lang.NumberFormatException) {
+                                } catch (_: java.lang.NumberFormatException) {
                                     0
                                 }
                             }
@@ -270,7 +294,7 @@ fun App(){
                             onValueChange = { value ->
                                 missingSR = try {
                                     value.trim().toInt()
-                                } catch (e: java.lang.NumberFormatException) {
+                                } catch (_: java.lang.NumberFormatException) {
                                     0
                                 }
                             },
@@ -297,43 +321,6 @@ fun App(){
                             }
                         )
                     }
-
-                    Column (
-                        modifier = Modifier
-                            .fillMaxWidth(0.5F)
-                            .padding(start = 12.dp)
-                    ) {
-                        Row {
-                            RadioButton(
-                                selected = selectedValue.value == labelSaturday,
-                                onClick = {
-                                    selectedValue.value = labelSaturday
-                                }
-                            )
-                            Text(
-                                text = labelSaturday,
-                                modifier = Modifier.align(Alignment.CenterVertically)
-                            )
-                        }
-                    }
-
-                    Column (
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        Row {
-                            RadioButton(
-                                selected = selectedValue.value == labelSunday,
-                                onClick = {
-                                    selectedValue.value = labelSunday
-                                }
-                            )
-                            Text(
-                                text = labelSunday,
-                                modifier = Modifier.align(Alignment.CenterVertically)
-                            )
-                        }
-                    }
                 }
 
                 Row (
@@ -348,7 +335,16 @@ fun App(){
                     ) {
                         Button(
                             onClick = {
-                                addGameToList(selectedValue.value == labelSaturday, gameTime.trim(), gameClass.trim(), missingKR, missingSR, amountGames)
+                                addGameToList(
+                                    selectedLocation.value,
+                                    selectedDay.value,
+                                    gameTime.trim(),
+                                    gameClass.trim(),
+                                    missingKR,
+                                    missingSR,
+                                    amountGames
+                                )
+
                                 gameTime = ""
                                 gameClass = ""
                                 missingKR = 0
@@ -358,7 +354,7 @@ fun App(){
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
-                            Text("Add To List")
+                            Text("Zur Liste hinzufügen")
                         }
                     }
 
@@ -373,7 +369,7 @@ fun App(){
                             modifier = Modifier
                                 .fillMaxWidth()
                         ) {
-                            Text("Print")
+                            Text("Text erzeugen")
                         }
                     }
                 }
@@ -391,12 +387,12 @@ fun App(){
                             modifier = Modifier.padding(bottom = 5.dp)
                         ) {
                             Text(
-                                text = "Saturday:",
+                                text = labelDaySaturday,
                                 fontSize = 20.sp
                             )
                         }
                         Row {
-                            GameList(isSaturday = true, games = saturdayGames)
+                            GameList(isSaturday = true)
                         }
                     }
 
@@ -409,12 +405,12 @@ fun App(){
                             modifier = Modifier.padding(bottom = 5.dp)
                         ) {
                             Text(
-                                text = "Sunday:",
+                                text = labelDaySunday,
                                 fontSize = 20.sp
                             )
                         }
                         Row {
-                            GameList(isSaturday = false, sundayGames)
+                            GameList(isSaturday = false)
                         }
                     }
                 }
@@ -424,19 +420,56 @@ fun App(){
 }
 
 @Composable
-fun GameList(isSaturday: Boolean, games: List<Game>) {
+fun GameList(isSaturday: Boolean) {
     Column (
         modifier = Modifier
             .verticalScroll(ScrollState(0))
     ) {
-        if(games.isNotEmpty()) {
-            games.forEach { game ->
-                GameRow(isSaturday, game)
+
+        val currentDaysList = allGames.filter { game ->
+            if(isSaturday) {
+                game.day == labelDaySaturday
+            } else {
+                game.day == labelDaySunday
+            }
+        }
+        logger.error("All games: " + currentDaysList.joinToString(","))
+
+        if(currentDaysList.isNotEmpty()) {
+
+            @Composable
+            fun gameForEachCallback(game: Game) {
+                GameRow(game)
 
                 Divider(
                     color = MaterialTheme.colors.secondary,
                     thickness = 1.dp
                 )
+            }
+
+            val gamesGymLH = currentDaysList.filter { it.location == labelLocationLH}
+            val gamesGymEH = currentDaysList.filter { it.location == labelLocationEH}
+            val areBothListsFilled = gamesGymLH.isNotEmpty() && gamesGymEH.isNotEmpty()
+
+            if(gamesGymLH.isNotEmpty()) {
+                Text(labelLocationLH)
+                gamesGymLH.forEach { game ->
+                    gameForEachCallback(game)
+                }
+            }
+
+            if(areBothListsFilled) {
+                Divider(
+                    color = MaterialTheme.colors.secondary,
+                    thickness = 2.dp
+                )
+            }
+
+            if(gamesGymEH.isNotEmpty()) {
+                Text(labelLocationEH)
+                gamesGymEH.forEach { game ->
+                    gameForEachCallback(game)
+                }
             }
         } else {
             Text("None")
@@ -445,7 +478,7 @@ fun GameList(isSaturday: Boolean, games: List<Game>) {
 }
 
 @Composable
-fun GameRow(isSaturday: Boolean, game: Game) {
+fun GameRow(game: Game) {
     Row (
         modifier = Modifier.padding(bottom = 5.dp, top = 5.dp)
     ) {
@@ -481,19 +514,8 @@ fun GameRow(isSaturday: Boolean, game: Game) {
         )
         Button(
             onClick = {
-                val currentList = if (isSaturday) {
-                    saturdayGames
-                } else {
-                    sundayGames
-                }
-                currentList.remove(game)
-                logger.info("New List: ${
-                    if(isSaturday) {
-                        "Saturday"
-                    } else {
-                        "Sunday"
-                    }}: ${currentList.joinToString("|")}"
-                )
+                allGames.remove(game)
+                logger.info("New List: ${allGames.joinToString("|")}")
             },
             modifier = Modifier
                 .size(15.dp)

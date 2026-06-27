@@ -22,5 +22,7 @@ data class Game (
     val gameClass: String,
     val missingKR: Int,
     val missingSR: Int,
-    val amountGames: Int
+    val amountGames: Int,
+    val location: String,
+    val day: String
 )

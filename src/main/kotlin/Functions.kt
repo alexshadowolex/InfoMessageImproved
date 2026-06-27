@@ -1,51 +1,44 @@
-import kotlinx.datetime.Clock
-import kotlinx.datetime.toJavaInstant
 import java.io.File
 import java.io.FileOutputStream
 import java.io.PrintStream
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.format.DateTimeFormatterBuilder
+import kotlin.time.Clock
+import kotlin.time.toJavaInstant
 
 
-fun addGameToList(isSaturday: Boolean, gameTime: String, gameClass: String, missingKR: Int, missingSR: Int, amountGames: Int) {
-    val currentList = if(isSaturday) {
-        saturdayGames
-    } else {
-        sundayGames
-    }
-
-    currentList.add(
+fun addGameToList(
+    location: String,
+    day: String,
+    gameTime: String,
+    gameClass: String,
+    missingKR: Int,
+    missingSR: Int,
+    amountGames: Int
+) {
+    allGames.add(
         Game(
             gameTime,
             gameClass,
             missingKR,
             missingSR,
-            amountGames
+            amountGames,
+            location,
+            day
         )
     )
 
     try {
-        val tempList = currentList.toMutableList()
-        tempList.sortBy {
+        allGames.sortBy {
             it.time.substringBefore(":").toInt()
-        }
-
-        currentList.clear()
-        tempList.forEach {
-            currentList.add(it)
         }
     } catch (e: Exception) {
         logger.error("Error wile sorting the list. Did you add garbage as a time?")
         e.printStackTrace()
     }
 
-    logger.info("New List: ${
-        if(isSaturday) {
-            "Saturday"
-        } else {
-            "Sunday"
-        }}: ${currentList.joinToString("|")}"
+    logger.info("New List: ${allGames.joinToString("|")}"
     )
 }
 
@@ -58,10 +51,13 @@ fun printFile(textFileName: String, locationSaturday: String, locationSunday: St
     val outputFile = File("${outputDirectory.name}/$textFileName.txt")
     outputFile.createNewFile()
 
+    val saturdayGames = allGames.filter { it.day == labelDaySaturday }
+    val sundayGames = allGames.filter { it.day == labelDaySunday }
+
     var output = ""
     if(saturdayGames.isNotEmpty()) {
         output += "*+++Samstag+++*\nAlle Spiele finden in der *$locationSaturday* statt\n"
-        output += buildGamesString(saturdayGames)
+        output += buildGamesString(allGames)
     }
 
     if(sundayGames.isNotEmpty()) {
@@ -76,39 +72,45 @@ fun printFile(textFileName: String, locationSaturday: String, locationSunday: St
 }
 
 fun buildGamesString(games: List<Game>): String {
+    val specialKrGameClasses = listOf(
+        "1. Männer",
+        "1.Männer",
+        "1. Frauen",
+        "1.Frauen"
+    )
     var output = ""
-    games.forEach {
-        output += "\n*${it.time} Uhr* "
-        if(it.amountGames > 1) {
-            output += "finden ${it.amountGames} Spiele der ${it.gameClass} statt. Dafür "
+    games.forEach { game ->
+        output += "\n*${game.time} Uhr* "
+        if(game.amountGames > 1) {
+            output += "finden ${game.amountGames} Spiele der ${game.gameClass} statt. Dafür "
         }
 
-        val totalAmountOfMissingPeople = it.missingKR + it.missingSR
+        val totalAmountOfMissingPeople = game.missingKR + game.missingSR
         output += if( totalAmountOfMissingPeople == 1 ) {
             "wird "
         } else {
             "werden "
         }
 
-        if(it.amountGames == 1) {
-            output += "bei der ${it.gameClass} "
+        if(game.amountGames == 1) {
+            output += "bei der ${game.gameClass} "
         }
 
         output += "noch "
 
-        if(it.missingSR != 0) {
-            output += "*${it.missingSR} SR* "
+        if(game.missingSR != 0) {
+            output += "*${game.missingSR} SR* "
         }
 
-        if(it.missingKR != 0){
-            if(it.missingSR != 0 ) {
+        if(game.missingKR != 0){
+            if(game.missingSR != 0 ) {
                 output += "und "
             }
-            output += "*${it.missingKR} KR* "
+            output += "*${game.missingKR} KR* "
 
-            // TODO
-            if(it.gameClass.trim() == "1. Männer" || it.gameClass.trim() == "1.Männer")
-                output += "mit Sachsenligaerweiterung "
+            if(specialKrGameClasses.any { game.gameClass.trim() == it })
+                // TODO
+                output += "mit HVS-Erlaubnis "
         }
 
         output += "benötigt.\n\n====================\n"
