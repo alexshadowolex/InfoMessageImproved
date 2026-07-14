@@ -43,12 +43,15 @@ fun addGameToList(
 }
 
 
-fun printFile(textFileName: String, locationSaturday: String, locationSunday: String) {
+fun printFile(textFileName: String): String {
     val outputDirectory = File("output")
     if(!outputDirectory.exists()) {
         outputDirectory.mkdir()
     }
     val outputFile = File("${outputDirectory.name}/$textFileName.txt")
+    if(outputFile.exists()) {
+        outputFile.delete()
+    }
     outputFile.createNewFile()
 
     val saturdayGames = allGames.filter { it.day == labelDaySaturday }
@@ -56,66 +59,94 @@ fun printFile(textFileName: String, locationSaturday: String, locationSunday: St
 
     var output = ""
     if(saturdayGames.isNotEmpty()) {
-        output += "*+++Samstag+++*\nAlle Spiele finden in der *$locationSaturday* statt\n"
-        output += buildGamesString(allGames)
+        output += buildGamesString(allGames, labelDaySaturday)
     }
 
     if(sundayGames.isNotEmpty()) {
-        output += "*+++Sonntag+++*\nAlle Spiele finden in der *$locationSunday* statt\n"
-        output += buildGamesString(sundayGames)
+        output += buildGamesString(sundayGames, labelDaySunday)
     }
 
     logger.info("Print Finished.")
     logger.info("Full printed text:\n$output")
 
     outputFile.writeText(output, charset("UTF-8"))
+
+    return outputFile.name
 }
 
-fun buildGamesString(games: List<Game>): String {
+fun buildGamesString(games: List<Game>, day: String): String {
+    var output = "*+++$day+++*\n"
+
+    val lhGames = games.filter { it.location == labelLocationLH }
+    val ehGames = games.filter { it.location == labelLocationEH }
+
+    var locationPrefix = "Alle"
+    if(ehGames.isNotEmpty() && lhGames.isNotEmpty()) {
+        locationPrefix = "Folgende"
+    }
+
+    if(lhGames.isNotEmpty()) {
+        output += "$locationPrefix Spiele finden in der *$labelLocationLH* statt\n"
+        lhGames.forEach { game ->
+            output += buildGameString(game)
+        }
+    }
+
+    if(ehGames.isNotEmpty()) {
+        output += "$locationPrefix Spiele finden in der *$labelLocationEH* statt\n"
+        ehGames.forEach { game ->
+            output += buildGameString(game)
+        }
+    }
+
+    return output
+}
+
+fun buildGameString(game: Game): String {
     val specialKrGameClasses = listOf(
         "1. Männer",
         "1.Männer",
         "1. Frauen",
         "1.Frauen"
     )
+
     var output = ""
-    games.forEach { game ->
-        output += "\n*${game.time} Uhr* "
-        if(game.amountGames > 1) {
-            output += "finden ${game.amountGames} Spiele der ${game.gameClass} statt. Dafür "
-        }
 
-        val totalAmountOfMissingPeople = game.missingKR + game.missingSR
-        output += if( totalAmountOfMissingPeople == 1 ) {
-            "wird "
-        } else {
-            "werden "
-        }
-
-        if(game.amountGames == 1) {
-            output += "bei der ${game.gameClass} "
-        }
-
-        output += "noch "
-
-        if(game.missingSR != 0) {
-            output += "*${game.missingSR} SR* "
-        }
-
-        if(game.missingKR != 0){
-            if(game.missingSR != 0 ) {
-                output += "und "
-            }
-            output += "*${game.missingKR} KR* "
-
-            if(specialKrGameClasses.any { game.gameClass.trim() == it })
-                // TODO
-                output += "mit HVS-Erlaubnis "
-        }
-
-        output += "benötigt.\n\n====================\n"
+    output += "\n*${game.time} Uhr* "
+    if(game.amountGames > 1) {
+        output += "finden ${game.amountGames} Spiele der ${game.gameClass} statt. Dafür "
     }
 
+    val totalAmountOfMissingPeople = game.missingKR + game.missingSR
+    output += if( totalAmountOfMissingPeople == 1 ) {
+        "wird "
+    } else {
+        "werden "
+    }
+
+    if(game.amountGames == 1) {
+        output += "bei der ${game.gameClass} "
+    }
+
+    output += "noch "
+
+    if(game.missingSR != 0) {
+        output += "*${game.missingSR} SR* "
+    }
+
+    if(game.missingKR != 0){
+        if(game.missingSR != 0 ) {
+            output += "und "
+        }
+        output += "*${game.missingKR} KR* "
+
+        if(specialKrGameClasses.any { game.gameClass.trim() == it }) {
+            // TODO
+            output += "mit HVS-Erlaubnis "
+        }
+    }
+
+    output += "benötigt.\n\n====================\n"
     return output
 }
 

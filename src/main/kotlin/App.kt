@@ -10,12 +10,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.tkuenneth.nativeparameterstoreaccess.NativeParameterStoreAccess
 import com.github.tkuenneth.nativeparameterstoreaccess.WindowsRegistry
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.seconds
 
 val lightColorPalette = lightColors(
@@ -46,8 +51,6 @@ const val labelDaySunday = "Sonntag"
 fun App(){
     var isInDarkMode by remember { mutableStateOf(false) }
     var textFileName by remember { mutableStateOf("") }
-    var locationSaturday by remember { mutableStateOf("") }
-    var locationSunday by remember { mutableStateOf("") }
     var gameTime by remember { mutableStateOf("") }
     var gameClass by remember { mutableStateOf("") }
     var missingKR by remember { mutableStateOf(0) }
@@ -58,6 +61,8 @@ fun App(){
 
     val selectedDay = remember { mutableStateOf(labelDaySaturday) }
 
+    val isTextGenerated = mutableStateOf(false)
+    var lastGeneratedFileName = ""
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -70,6 +75,7 @@ fun App(){
             delay(1.seconds)
         }
     }
+    val scaffoldState = rememberScaffoldState()
 
     MaterialTheme(
         colors = if (isInDarkMode) {
@@ -78,7 +84,9 @@ fun App(){
             lightColorPalette
         }
     ) {
-        Scaffold {
+        Scaffold (
+            scaffoldState = scaffoldState
+        ) {
             Column(
                 modifier = Modifier.padding(24.dp)
             ) {
@@ -96,7 +104,7 @@ fun App(){
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "File Name"
+                                    text = "Dateiname"
                                 )
                             },
                             value = textFileName,
@@ -106,26 +114,28 @@ fun App(){
 
                         )
 
-                        if (false) {
+                        if (isTextGenerated.value) {
                             Text(
                                 style = MaterialTheme.typography.body1,
-                                text = "Open Folder to Last Excel Export",
+                                text = "Öffne Ordner der erzeugten Textdatei",
                                 modifier = Modifier
                                     .padding(top = 9.dp)
                                     .clickable {
-                                        /*backgroundCoroutineScope.launch {
-                                        if (AppConfig.lastGeneratedExcelExportName.isNotEmpty()) {
-                                            Runtime.getRuntime().exec(
-                                                "explorer.exe " +
-                                                        "/select," +
-                                                        "${System.getProperty("user.dir")}\\${AppConfig.excelExportOutputDirectoryName}\\" +
-                                                        AppConfig.lastGeneratedExcelExportName
-                                            )
+                                        CoroutineScope(Dispatchers.IO).launch {
+                                            if (lastGeneratedFileName.isNotEmpty()) {
+                                                val filePathAndName = System.getProperty("user.dir") +
+                                                    "\\output\\" +
+                                                    lastGeneratedFileName
+
+                                                Runtime.getRuntime().exec(
+                                            "explorer.exe " +
+                                                    "/select," +
+                                                    filePathAndName
+                                                )
+                                            }
                                         }
-                                    }*/
                                     }
                                     .pointerHoverIcon(PointerIcon.Hand),
-                                textDecoration = TextDecoration.Underline,
                                 color = MaterialTheme.colors.secondary,
                             )
                         }
@@ -138,7 +148,7 @@ fun App(){
                             .fillMaxHeight()
                             .padding(end = 12.dp)
                     ) {
-                        Text("Location")
+                        Text("Halle")
 
                         Row (
                             modifier = Modifier
@@ -178,7 +188,7 @@ fun App(){
                         modifier = Modifier
                             .fillMaxSize()
                     ) {
-                        Text("Day")
+                        Text("Tag")
 
                         Row (
                             modifier = Modifier
@@ -228,7 +238,7 @@ fun App(){
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "Time"
+                                    text = "Anwurfzeit"
                                 )
                             },
                             value = gameTime,
@@ -246,7 +256,7 @@ fun App(){
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "Game Class"
+                                    text = "Spielklasse"
                                 )
                             },
                             value = gameClass,
@@ -264,7 +274,7 @@ fun App(){
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "Missing KR"
+                                    text = "Fehlende KR"
                                 )
                             },
                             value = missingKR.toString(),
@@ -287,7 +297,7 @@ fun App(){
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "Missing SR"
+                                    text = "Fehlende SR"
                                 )
                             },
                             value = missingSR.toString(),
@@ -308,7 +318,7 @@ fun App(){
                             label = {
                                 Text(
                                     color = MaterialTheme.colors.onPrimary,
-                                    text = "Amount Games"
+                                    text = "Anzahl der Spiele"
                                 )
                             },
                             value = amountGames.toString(),
@@ -364,7 +374,37 @@ fun App(){
                     ) {
                         Button(
                             onClick = {
-                                printFile(textFileName.trim(), locationSaturday.trim(), locationSunday.trim())
+                                val textFileNameTrimmed = textFileName.trim()
+                                var validationErrorMessage = ""
+
+                                if(textFileNameTrimmed.isEmpty()) {
+                                    validationErrorMessage = "Name der Textdatei fehlt!"
+                                }
+
+                                if(allGames.isEmpty()) {
+                                    validationErrorMessage = "Keine Spiele vorhanden!"
+                                }
+
+                                if(validationErrorMessage.isNotEmpty()) {
+                                    logger.info(validationErrorMessage)
+                                    CoroutineScope(Dispatchers.IO).launch {
+                                        scaffoldState.snackbarHostState.showSnackbar(
+                                            message = validationErrorMessage,
+                                            duration = SnackbarDuration.Short
+                                        )
+                                    }
+                                    return@Button
+                                }
+
+                                lastGeneratedFileName = printFile(textFileNameTrimmed)
+                                isTextGenerated.value = true
+
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    scaffoldState.snackbarHostState.showSnackbar(
+                                        message = "Text in Textdatei \"${lastGeneratedFileName}\" erzeugt",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -433,7 +473,6 @@ fun GameList(isSaturday: Boolean) {
                 game.day == labelDaySunday
             }
         }
-        logger.error("All games: " + currentDaysList.joinToString(","))
 
         if(currentDaysList.isNotEmpty()) {
 
@@ -472,7 +511,10 @@ fun GameList(isSaturday: Boolean) {
                 }
             }
         } else {
-            Text("None")
+            Text(
+                text = "Keine Spiele vorhanden",
+                style = TextStyle(fontStyle = FontStyle.Italic)
+            )
         }
     }
 }
@@ -507,7 +549,7 @@ fun GameRow(game: Game) {
                 .align(Alignment.CenterVertically)
         )
         Text(
-            text = "Amount: ${game.amountGames}",
+            text = "Anzahl: ${game.amountGames}",
             modifier = Modifier
                 .weight(0.2F)
                 .align(Alignment.CenterVertically)
