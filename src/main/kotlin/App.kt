@@ -45,6 +45,7 @@ const val labelLocationLH = "Lößnitzsporthalle"
 const val labelLocationEH = "Elbsporthalle"
 const val labelDaySaturday = "Samstag"
 const val labelDaySunday = "Sonntag"
+const val maxTextFieldStringLength = 20
 
 @Composable
 @Preview
@@ -108,10 +109,16 @@ fun App(){
                                 )
                             },
                             value = textFileName,
+                            singleLine = true,
                             onValueChange = { value ->
-                                textFileName = value
-                            }
-
+                                if(value.length < maxTextFieldStringLength) {
+                                    textFileName = value
+                                }
+                            },
+                            placeholder = {
+                                Text("Name Output-Datei ohne Endung")
+                            },
+                            modifier = Modifier.moveFocusOnTab()
                         )
 
                         if (isTextGenerated.value) {
@@ -243,10 +250,16 @@ fun App(){
                             },
                             value = gameTime,
                             onValueChange = { value ->
-                                gameTime = value
+                                if(value.length < maxTextFieldStringLength) {
+                                    gameTime = value
+                                }
                             },
                             modifier = Modifier
                                 .padding(end = 12.dp)
+                                .moveFocusOnTab(),
+                            placeholder = {
+                                Text("Zeit im Format mm:ss ohne \"Uhr\"")
+                            }
 
                         )
                     }
@@ -261,11 +274,13 @@ fun App(){
                             },
                             value = gameClass,
                             onValueChange = { value ->
-                                gameClass = value
+                                if(value.length < maxTextFieldStringLength) {
+                                    gameClass = value
+                                }
                             },
                             modifier = Modifier
                                 .padding(end = 12.dp)
-
+                                .moveFocusOnTab()
                         )
                     }
 
@@ -279,12 +294,15 @@ fun App(){
                             },
                             value = missingKR.toString(),
                             onValueChange = { value ->
-                                missingKR = try {
-                                    value.trim().toInt()
-                                } catch (_: java.lang.NumberFormatException) {
-                                    0
+                                if(value.length < maxTextFieldStringLength) {
+                                    missingKR = try {
+                                        value.trim().toInt()
+                                    } catch (_: java.lang.NumberFormatException) {
+                                        0
+                                    }
                                 }
-                            }
+                            },
+                            modifier = Modifier.moveFocusOnTab()
                         )
                     }
                 }
@@ -302,14 +320,17 @@ fun App(){
                             },
                             value = missingSR.toString(),
                             onValueChange = { value ->
-                                missingSR = try {
-                                    value.trim().toInt()
-                                } catch (_: java.lang.NumberFormatException) {
-                                    0
+                                if(value.length < maxTextFieldStringLength) {
+                                    missingSR = try {
+                                        value.trim().toInt()
+                                    } catch (_: java.lang.NumberFormatException) {
+                                        0
+                                    }
                                 }
                             },
                             modifier = Modifier
                                 .padding(end = 12.dp)
+                                .moveFocusOnTab()
                         )
                     }
 
@@ -323,12 +344,15 @@ fun App(){
                             },
                             value = amountGames.toString(),
                             onValueChange = { value ->
-                                amountGames = try {
-                                    value.trim().toInt()
-                                } catch (_: NumberFormatException) {
-                                    0
+                                if(value.length < maxTextFieldStringLength) {
+                                    amountGames = try {
+                                        value.trim().toInt()
+                                    } catch (_: NumberFormatException) {
+                                        0
+                                    }
                                 }
-                            }
+                            },
+                            modifier = Modifier.moveFocusOnTab()
                         )
                     }
                 }
